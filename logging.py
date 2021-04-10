@@ -1,10 +1,23 @@
 import csv
 import os
 import serial
+import re
 
 from datetime import datetime
 
-serialPort = "/dev/tty.usbmodem14601"
+serialPort = None
+for filename in os.listdir("/dev"):
+    if re.match("tty.usbmodem\d+", filename):
+        serialPort = "/dev/" + filename
+        break
+    # end
+# end
+
+if not serialPort:
+    print("Bluefruit Sense board is not connected.")
+    exit(0)
+# end
+
 bandRate = 115200  # In arduino, Serial.begin(band_rate)
 
 # log file
@@ -13,8 +26,8 @@ csvFile = open(logName, 'w', newline = '')
 csvWriter = csv.writer(csvFile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
 csvWriter.writerow(["time"]+["temperature"]+["pressure"]+["humidity"]+["altitude"]+["accel_x"]+["accel_y"]+["accel_z"]+["gyro_x"]+["gyro_y"]+["gyro_z"]+["mic"]+["fan"])
 
-
 device = serial.Serial(serialPort, bandRate)
+
 while True:
     timeStamp = str(datetime.now())
 
