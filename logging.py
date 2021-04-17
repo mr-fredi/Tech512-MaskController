@@ -1,17 +1,34 @@
 import csv
 import os
+import sys
 import serial
-import re
+import serial.tools.list_ports as list_ports
 
 from datetime import datetime
 
 serialPort = None
-for filename in os.listdir("/dev"):
-    if re.match("tty.usbmodem\d+", filename):
-        serialPort = "/dev/" + filename
-        break
+usingPorts = list(list_ports.comports())
+for port in usingPorts:
+    if sys.platform.startswith('win'):
+        if "Serial" in port.description:
+            serialPort = port.device
+            break
+        # end
+    elif sys.platform.startswith('darwin'):
+        if "Sense" in port.description:
+            serialPort = port.device
+            break
+        # end
     # end
 # end
+
+# for filename in os.listdir("/dev"):
+#     if re.match("tty.usbmodem\d+", filename):
+#         serialPort = "/dev/" + filename
+#         break
+#     # end
+# # end
+
 
 if not serialPort:
     print("Bluefruit Sense board is not connected.")
