@@ -9,7 +9,7 @@ void loop() {
   // 6.85 mA - pin06 current
   // analogRead values go from 0 to 1023, 
   // analogWrite values from 0 to 255
-  int output = int(255 * 1.0);
-//  analogWrite(fanPin, output);
-  digitalWrite(fanPin, HIGH);
+  int output = int(255 * 0.99);
+  analogWrite(fanPin, output);
+//  digitalWrite(fanPin, HIGH);
 }
