@@ -14,6 +14,7 @@ float accel_x, accel_y, accel_z;
 float gyro_x, gyro_y, gyro_z;
 float humidity;
 int32_t mic;
+int fanPin = 6;
 
 extern PDMClass PDM;
 short sampleBuffer[256];  // buffer to read samples into, each sample is 16-bits
@@ -33,16 +34,16 @@ void SensorsSetup(void) {
 }
 
 void FanSetup(void) {
-    // TODO: integrate with fan's setup
+    pinMode(fanPin, OUTPUT); // sets the pin as output
 }
 
-void FanSetup(void) {
+void BluetoothSetup(void) {
     // TODO: integrate with bluetooth's setup
 }
 
 void setup(void) {
     SensorsSetup();
-    // FanSetup();
+    FanSetup();
     // BluetoothSetup();
 }
 
@@ -92,16 +93,17 @@ void SensorProcess(void) {
 }
 
 void FanProcess(void) {
-    // TODO: integrate with fan's setup
+    int output = int(255 * 0.99);
+    analogWrite(fanPin, output);
 }
 
-void FanProcess(void) {
+void BluetoothProcess(void) {
     // TODO: integrate with bluetooth's setup
 }
 
 void loop(void) {
     SensorProcess();
-    // FanProcess();
+    FanProcess();
     // BluetoothProcess();
 
     delay(200);
