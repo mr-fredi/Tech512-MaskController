@@ -123,8 +123,7 @@ Temporary Items
 .apdisk
 
 ### vscode ###
-.vscode/
-*.code-workspace
+.vscode/*
 
 ### Windows ###
 # Windows thumbnail cache files
