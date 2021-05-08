@@ -47,7 +47,7 @@ void startAdv(void) {
     // Advertising packet
     Bluefruit.Advertising.clearData();
     Bluefruit.Advertising.addFlags(BLE_GAP_ADV_FLAGS_LE_ONLY_GENERAL_DISC_MODE);
-    Bluefruit.Advertising.addTxPower();
+//    Bluefruit.Advertising.addTxPower();
     Bluefruit.Advertising.addService(bleUart);
 
     // Tell the BLE device we want to send our name in a ScanResponse if asked.
