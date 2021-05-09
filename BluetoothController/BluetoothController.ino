@@ -3,7 +3,7 @@
 # include <BLEClientService.h>
 
 // Set this higher to automatically stop advertising after a time
-#define ADV_TIMEOUT   0  // seconds.
+#define ADV_TIMEOUT   0  // seconds. 
 
 // The following code is for setting a name based on the actual device MAC address
 // Where to go looking in memory for the MAC
@@ -15,11 +15,11 @@ typedef volatile uint32_t REG32;
 BLEUart bleUart;
 
 // Null-terminated string must be 1 longer than you set it, for the null
-char ble_name[14] = "SmartMaskXXXX";
+char ble_name[15] = "SmartMaskXXXX\n";
 
 void setup() {
-    Serial.begin(115200);
-    while ( !Serial ) delay(10);   // for nrf52840 with native usb
+//    Serial.begin(115200);
+//    while ( !Serial ) delay(10);   // for nrf52840 with native usb
 
     Bluefruit.begin();
     Bluefruit.setTxPower(4);    // Check bluefruit.h for supported values
@@ -47,7 +47,8 @@ void startAdv(void) {
     // Advertising packet
     Bluefruit.Advertising.clearData();
     Bluefruit.Advertising.addFlags(BLE_GAP_ADV_FLAGS_LE_ONLY_GENERAL_DISC_MODE);
-//    Bluefruit.Advertising.addTxPower();
+    Bluefruit.Advertising.setType(BLE_GAP_ADV_TYPE_CONNECTABLE_SCANNABLE_UNDIRECTED);
+    Bluefruit.Advertising.addTxPower();
     Bluefruit.Advertising.addService(bleUart);
 
     // Tell the BLE device we want to send our name in a ScanResponse if asked.
@@ -94,5 +95,6 @@ char nibble_to_hex(uint8_t nibble) {
 }
 
 void adv_stop_callback(void) {
-    Serial.println("Advertising time passed, advertising will now stop.");
+    return ;
+//    Serial.println("Advertising time passed, advertising will now stop.");
 }
