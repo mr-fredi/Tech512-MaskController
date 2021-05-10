@@ -172,7 +172,11 @@ void FanProcess(void) {
 }
 
 void BluetoothProcess(void) {
-    // TODO: integrate with bluetooth's setup
+    if (Bluefruit.connected()) {
+        // TODO: pass data here.
+        // uint8_t buff[];
+        bleUart.write(ble_name, sizeof(ble_name));
+    }
 }
 
 int32_t getPDMwave(int32_t samples) {
@@ -251,12 +255,12 @@ void SerialPrint(void) {
 
 // Bluetooth Print
 void BTPrint(void) {
-    char data[] = "";
+    char *data = NULL;
     int len = sprintf(data, "%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%d,%d\n", 
                             temperature, pressure, humidity, altitude,
                             accel_x, accel_y, accel_z, 
                             gyro_x, gyro_y, gyro_z, 
                             mic, fanSpeed);
     if (len <= 0) return ;
-    bleUart.write(data, (len + 1));
+    bleUart.write(data, sizeof(data));
 }
