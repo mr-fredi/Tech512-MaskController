@@ -67,13 +67,13 @@ void setup(void) {
     // to activate bluetooth.
     if (DEBUG) Serial.begin(115200);
     SensorsSetup();
-    FanSetup();
+//    FanSetup();
     BluetoothSetup();
 }
 
 void loop(void) {
     SensorProcess();
-    FanProcess();
+//    FanProcess();
     BluetoothProcess();
     BTPrint();
     if (DEBUG) SerialPrint();
@@ -175,7 +175,9 @@ void BluetoothProcess(void) {
     if (Bluefruit.connected()) {
         // TODO: pass data here.
         // uint8_t buff[];
-        bleUart.write(ble_name, sizeof(ble_name));
+        // bleUart.write(ble_name, sizeof(ble_name));
+        BTPrint();
+        if (DEBUG) SerialPrint();
     }
 }
 
@@ -255,12 +257,18 @@ void SerialPrint(void) {
 
 // Bluetooth Print
 void BTPrint(void) {
-    char *data = NULL;
-    int len = sprintf(data, "%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%d,%d\n", 
-                            temperature, pressure, humidity, altitude,
-                            accel_x, accel_y, accel_z, 
-                            gyro_x, gyro_y, gyro_z, 
-                            mic, fanSpeed);
-    if (len <= 0) return ;
-    bleUart.write(data, sizeof(data));
+    String data = String(temperature) + String(",") + 
+                  String(pressure) + String(",") + 
+                  String(humidity) + String(",") + 
+                  // String(altitude) + String(",") + 
+                  // String(accel_x) + String(",") + 
+                  // String(accel_y) + String(",") + 
+                  // String(accel_z) + String(",") + 
+                  // String(gyro_x) + String(",") + 
+                  // String(gyro_y) + String(",") + 
+                  // String(gyro_z) + String(",") + 
+                  // String(mic) + String(",") + 
+                  String(fanSpeed) + String("\n");
+
+    bleUart.write(data.c_str());
 }
