@@ -1,17 +1,21 @@
 #include <Adafruit_BMP280.h>
 #include <Adafruit_LSM6DS33.h>
 #include <Adafruit_SHT31.h>
+#include <Adafruit_APDS9960.h>
 #include <Adafruit_Sensor.h>
 #include <PDM.h>
 
-Adafruit_BMP280 bmp280;     // temperautre, barometric pressure
-Adafruit_LSM6DS33 lsm6ds33; // accelerometer, gyroscope
-Adafruit_SHT31 sht30;       // humidity
+Adafruit_BMP280 bmp280;      // temperautre, barometric pressure
+Adafruit_LSM6DS33 lsm6ds33;  // accelerometer, gyroscope
+Adafruit_SHT31 sht30;        // humidity
+Adafruit_APDS9960 apds9960;  // light, color
 
 float temperature, pressure, altitude;
 float accel_x, accel_y, accel_z;
 float gyro_x, gyro_y, gyro_z;
 float humidity;
+uint8_t proximity;
+uint16_t r, g, b, c;
 int32_t mic;
 
 extern PDMClass PDM;
@@ -20,10 +24,12 @@ volatile int samplesRead; // number of samples read
 
 void setup(void) {
   Serial.begin(115200);
-//  while (!Serial) delay(10);
-//  Serial.println("Feather Sense Sensor Demo");
+  //  while (!Serial) delay(10);
 
   // initialize the sensors
+  apds9960.begin();
+  apds9960.enableProximity(true);
+  apds9960.enableColor(true);
   bmp280.begin();
   lsm6ds33.begin_I2C();
   sht30.begin();
@@ -32,6 +38,12 @@ void setup(void) {
 }
 
 void loop(void) {
+  proximity = apds9960.readProximity();
+  while (!apds9960.colorDataReady()) {
+    delay(5);
+  }
+
+  apds9960.getColorData(&r, &g, &b, &c);
   temperature = bmp280.readTemperature();
   pressure = bmp280.readPressure();
   altitude = bmp280.readAltitude(1013.25);
@@ -103,8 +115,16 @@ void loop(void) {
   Serial.print(gyro_z);
   Serial.print(",");
   Serial.print(mic);
+  Serial.print(",");
+  Serial.print(r);
+  Serial.print(",");
+  Serial.print(g);
+  Serial.print(",");
+  Serial.print(b);
+  Serial.print(",");
+  Serial.print(c);
   Serial.println();
-  
+
   delay(200);
 }
 
