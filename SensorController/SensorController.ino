@@ -15,7 +15,7 @@ float accel_x, accel_y, accel_z;
 float gyro_x, gyro_y, gyro_z;
 float humidity;
 uint8_t proximity;
-uint16_t r, g, b, c;
+uint16_t r, g, b, a;
 int32_t mic;
 
 extern PDMClass PDM;
@@ -43,7 +43,7 @@ void loop(void) {
     delay(5);
   }
 
-  apds9960.getColorData(&r, &g, &b, &c);
+  apds9960.getColorData(&r, &g, &b, &a);
   temperature = bmp280.readTemperature();
   pressure = bmp280.readPressure();
   altitude = bmp280.readAltitude(1013.25);
