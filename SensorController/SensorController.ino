@@ -122,7 +122,7 @@ void loop(void) {
   Serial.print(",");
   Serial.print(b);
   Serial.print(",");
-  Serial.print(c);
+  Serial.print(a);
   Serial.println();
 
   delay(200);
