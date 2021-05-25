@@ -7,7 +7,7 @@
 #include <bluefruit.h>
 #include <BLEService.h>
 #include <BLEClientService.h>
-#include <AutoPID.h>
+// #include <AutoPID.h>
 
 // Global Variables
 
@@ -15,13 +15,14 @@
 #define ADV_TIMEOUT 0  // seconds. 
 #define DEBUG 1
 
-#define fanPin 6
+#define FANPIN 6
+#define BATPIN A6
 
 #define OUTPUT_MIN 0
 #define OUTPUT_MAX 255
-//#define Kp 0.33
-//#define Ki 0.0
-//#define Kd 0.0
+// #define Kp 0.33
+// #define Ki 0.0
+// #define Kd 0.0
 
 // The following code is for setting a name based on the actual device MAC address
 // Where to go looking in memory for the MAC
@@ -31,40 +32,39 @@ typedef volatile uint32_t REG32;
 #define MAC_ADDRESS_LOW   (*(pREG32 (0x100000a4)))
 
 BLEUart bleUart;
-Adafruit_BMP280 bmp280;     // temperautre, barometric pressure
-Adafruit_LSM6DS33 lsm6ds33; // accelerometer, gyroscope
-Adafruit_SHT31 sht30;       // humidity
+Adafruit_BMP280 bmp280;      // temperautre, barometric pressure
+Adafruit_LSM6DS33 lsm6ds33;  // accelerometer, gyroscope
+Adafruit_SHT31 sht30;        // humidity
 Adafruit_APDS9960 apds9960;  // light, color
 
-double humidity;
 //double setPoint = 40.0;
-int fanSpeed = int(0.99 * 255);
-
-float temperature, pressure, altitude;
+float fanSpeedPercent = 0.99;
+float temperature, pressure, altitude, humidity;
 float accel_x, accel_y, accel_z;
 float gyro_x, gyro_y, gyro_z;
-//float humidity;
+int vBattery = 0;
 uint8_t proximity;
 uint16_t r, g, b, a;
 int32_t mic;
 
 // Null-terminated string must be 1 longer than you set it, for the null
 char ble_name[15] = "SmartMaskXXXX\n";
-//AutoPID PID(&humidity, &setPoint, &fanSpeed, OUTPUT_MIN, OUTPUT_MAX, Kp, Ki, Kd);
+// AutoPID PID(&humidity, &setPoint, &fanSpeed, OUTPUT_MIN, OUTPUT_MAX, Kp, Ki, Kd);
 
 extern PDMClass PDM;
-short sampleBuffer[256];  // buffer to read samples into, each sample is 16-bits
-volatile int samplesRead; // number of samples read
+short sampleBuffer[256];   // buffer to read samples into, each sample is 16-bits
+volatile int samplesRead;  // number of samples read
 
 /*****************************************************************/
 // Functions
 void SensorSetup(void);
 void FanSetup(void);
-void BluetootheSetup(void);
+void BluetoothSetup(void);
 
 void SensorProcess(void);
 void FanProcess(void);
 void BluetoothProcess(void);
+void BatteryProcess(void);
 
 void startAdv(void);
 int32_t getPDMwave(int32_t samples);
@@ -91,6 +91,7 @@ void loop(void) {
     SensorProcess();
     FanProcess();
     BluetoothProcess();
+    BatteryProcess();
     BTPrint();
 //    if (DEBUG) SerialPrint();
 
@@ -98,7 +99,8 @@ void loop(void) {
 }
 
 /*****************************************************************/
-// Function implementations.
+// Main functions implementations.
+
 void SensorsSetup(void) {
     // initialize the sensors
     apds9960.begin();
@@ -112,7 +114,7 @@ void SensorsSetup(void) {
 }
 
 void FanSetup(void) {
-    pinMode(fanPin, OUTPUT); // sets the pin as output
+    pinMode(FANPIN, OUTPUT);  // sets the pin as output
 
     // if humanity is more than n% below or above setpoint,
     // OUTPUT will be set to min or max respectively
@@ -179,7 +181,7 @@ void SensorProcess(void) {
   
     apds9960.getColorData(&r, &g, &b, &a);
     temperature = bmp280.readTemperature();
-    pressure = bmp280.readPressure() % 100000;
+    pressure = bmp280.readPressure();
     altitude = bmp280.readAltitude(1013.25);
 
     sensors_event_t accel;
@@ -201,8 +203,8 @@ void SensorProcess(void) {
 
 void FanProcess(void) {
 //    PID.run();
-    fanSpeed = int(((0.0096 * humidity) + 0.0472) * 255);
-    analogWrite(fanPin, int(fanSpeed));
+    fanSpeedPercent = (0.0098 * humidity) + 0.0257;
+    analogWrite(FANPIN, round(fanSpeedPercent * 255));
 }
 
 void BluetoothProcess(void) {
@@ -210,6 +212,14 @@ void BluetoothProcess(void) {
         BTPrint();
     }
 }
+
+void BatteryProcess(void) {
+    vBattery = round((((analogRead(BATPIN) * 2 * 3.3) / 1024) / 4.2) * 100);
+    if (vBattery == 100) --vBattery;
+}
+
+/*****************************************************************/
+// Helper functions implementations.
 
 int32_t getPDMwave(int32_t samples) {
     short minwave = 30000;
@@ -290,25 +300,34 @@ void SerialPrint(void) {
     Serial.print(a);
     Serial.print(mic);
     Serial.print(",");
-    Serial.print(fanSpeed);
+    Serial.print(vBattery);
+    Serial.print(",");
+    Serial.print(round(fanSpeedPercent * 255));
     Serial.println();
 }
 
 // Bluetooth Print
 void BTPrint(void) {
-//    String data = String(temperature) + String(",") + String(pressure) + String(",") + String(humidity) + String("\n");
-//    bleUart.write(data.c_str());
-//    bleUart.flush();
+    String tempBuff = String(temperature + 0.05);
+    tempBuff[tempBuff.length() - 1] = ',';
 
-    String temp = String(temperature) + String(",") + 
-                  String(pressure) + String(",") + 
-                  String(humidity) + String(",") + 
-                  String(fanSpeed) + String("\n\r");
-    char buff[temp.length() + 1] = {0};
-    temp.toCharArray(buff, temp.length());
+    tempBuff += String(int(fmod(round(pressure), 100000) * 10));
+    tempBuff[tempBuff.length() - 1] = ',';
+    
+    tempBuff += String(humidity + 0.05);
+    tempBuff[tempBuff.length() - 1] = ',';
+
+    tempBuff += (String(vBattery) + String(","));
+    
+    tempBuff += (String(round(fanSpeedPercent * 100)) + String("\n\r"));
+ 
+    char buff[tempBuff.length() + 1] = {0};
+    tempBuff.toCharArray(buff, tempBuff.length());
+
+//    if (DEBUG) Serial.print(buff);
                
     bleUart.write(buff);
-    bleUart.flush();
+    bleUart.flush(); 
  
 //    String data = String(temperature) + String(",") + String(pressure) + String(",");
 //    bleUart.write(data.c_str());
