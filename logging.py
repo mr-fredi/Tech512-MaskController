@@ -41,7 +41,7 @@ bandRate = 115200  # In arduino, Serial.begin(band_rate)
 logName = "{}/logs/{}.csv".format(os.getcwd(), datetime.now().strftime("%Y-%m-%d_%H_%M"))
 csvFile = open(logName, 'w', newline = '')
 csvWriter = csv.writer(csvFile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
-csvWriter.writerow(["time"]+["temperature"]+["pressure"]+["humidity"]+["altitude"]+["accel_x"]+["accel_y"]+["accel_z"]+["gyro_x"]+["gyro_y"]+["gyro_z"]+["red"]+["green"]+["blue"]+["alpha"]+["mic"]+["fan"])
+csvWriter.writerow(["time"]+["temperature"]+["pressure"]+["humidity"]+["fan"]+["battery"])
 
 device = serial.Serial(serialPort, bandRate)
 
@@ -50,5 +50,5 @@ while True:
 
     data = (device.readline()).decode("utf-8").splitlines()[0].split(',')
     # print(data)
-    csvWriter.writerow([timeStamp]+[data[0]]+[data[1]]+[data[2]]+[data[3]]+[data[4]]+[data[5]]+[data[6]]+[data[7]]+[data[8]]+[data[9]]+[data[10]]+[data[11]]+[data[12]]+[data[13]]+[data[14]]+[data[15]])
+    csvWriter.writerow([timeStamp]+[data[0]]+[data[1]]+[data[2]]+[data[3]]+[data[4]])
 # end
