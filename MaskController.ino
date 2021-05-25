@@ -13,15 +13,15 @@
 
 // Set this higher to automatically stop advertising after a time
 #define ADV_TIMEOUT 0  // seconds. 
-#define DEBUG 0
+#define DEBUG 1
 
 #define fanPin 6
 
 #define OUTPUT_MIN 0
 #define OUTPUT_MAX 255
-#define Kp 0.33
-#define Ki 0.0
-#define Kd 0.0
+//#define Kp 0.33
+//#define Ki 0.0
+//#define Kd 0.0
 
 // The following code is for setting a name based on the actual device MAC address
 // Where to go looking in memory for the MAC
@@ -37,8 +37,8 @@ Adafruit_SHT31 sht30;       // humidity
 Adafruit_APDS9960 apds9960;  // light, color
 
 double humidity;
-double setPoint = 40.0;
-double fanSpeed = 0.99 * 255;
+//double setPoint = 40.0;
+int fanSpeed = int(0.99 * 255);
 
 float temperature, pressure, altitude;
 float accel_x, accel_y, accel_z;
@@ -50,7 +50,7 @@ int32_t mic;
 
 // Null-terminated string must be 1 longer than you set it, for the null
 char ble_name[15] = "SmartMaskXXXX\n";
-AutoPID PID(&humidity, &setPoint, &fanSpeed, OUTPUT_MIN, OUTPUT_MAX, Kp, Ki, Kd);
+//AutoPID PID(&humidity, &setPoint, &fanSpeed, OUTPUT_MIN, OUTPUT_MAX, Kp, Ki, Kd);
 
 extern PDMClass PDM;
 short sampleBuffer[256];  // buffer to read samples into, each sample is 16-bits
@@ -92,7 +92,7 @@ void loop(void) {
     FanProcess();
     BluetoothProcess();
     BTPrint();
-    if (DEBUG) SerialPrint();
+//    if (DEBUG) SerialPrint();
 
     delay(2000);
 }
@@ -116,10 +116,10 @@ void FanSetup(void) {
 
     // if humanity is more than n% below or above setpoint,
     // OUTPUT will be set to min or max respectively
-    PID.setBangBang(20);
+    // PID.setBangBang(20);
 
     // set PID update interval to n ms
-    PID.setTimeStep(500);
+    // PID.setTimeStep(500);
 }
 
 void BluetoothSetup(void) {
@@ -179,7 +179,7 @@ void SensorProcess(void) {
   
     apds9960.getColorData(&r, &g, &b, &a);
     temperature = bmp280.readTemperature();
-    pressure = bmp280.readPressure();
+    pressure = bmp280.readPressure() % 100000;
     altitude = bmp280.readAltitude(1013.25);
 
     sensors_event_t accel;
@@ -200,17 +200,14 @@ void SensorProcess(void) {
 }
 
 void FanProcess(void) {
-    PID.run();
+//    PID.run();
+    fanSpeed = int(((0.0096 * humidity) + 0.0472) * 255);
     analogWrite(fanPin, int(fanSpeed));
 }
 
 void BluetoothProcess(void) {
     if (Bluefruit.connected()) {
-        // TODO: pass data here.
-        // uint8_t buff[];
-        // bleUart.write(ble_name, sizeof(ble_name));
         BTPrint();
-        if (DEBUG) SerialPrint();
     }
 }
 
@@ -293,34 +290,47 @@ void SerialPrint(void) {
     Serial.print(a);
     Serial.print(mic);
     Serial.print(",");
-    Serial.print(",");
     Serial.print(fanSpeed);
     Serial.println();
 }
 
 // Bluetooth Print
 void BTPrint(void) {
-    String data = String(temperature) + String(",") + String(pressure) + String(",");
-    bleUart.write(data.c_str());
+//    String data = String(temperature) + String(",") + String(pressure) + String(",") + String(humidity) + String("\n");
+//    bleUart.write(data.c_str());
+//    bleUart.flush();
+
+    String temp = String(temperature) + String(",") + 
+                  String(pressure) + String(",") + 
+                  String(humidity) + String(",") + 
+                  String(fanSpeed) + String("\n\r");
+    char buff[temp.length() + 1] = {0};
+    temp.toCharArray(buff, temp.length());
+               
+    bleUart.write(buff);
     bleUart.flush();
  
-    data = String(humidity) + String(",") + String(altitude) + String(",");
-    bleUart.write(data.c_str());
-    bleUart.flush();
-
-    data = String(accel_x) + String(",") + String(accel_y) + String(",") + String(accel_z) + String(",");
-    bleUart.write(data.c_str());
-    bleUart.flush();
- 
-    data = String(gyro_x) + String(",") + String(gyro_y) + String(",") + String(gyro_z) + String(",");
-    bleUart.write(data.c_str());
-    bleUart.flush();
-
-    data = String(r) + String(",") + String(g) + String(",") + String(b) + String(",") + String(a) + String(",");
-    bleUart.write(data.c_str());
-    bleUart.flush();
-
-    data = String(mic) + String(",") + String(fanSpeed) + String("\n");
-    bleUart.write(data.c_str());
-    bleUart.flush();
+//    String data = String(temperature) + String(",") + String(pressure) + String(",");
+//    bleUart.write(data.c_str());
+//    bleUart.flush();
+// 
+//    data = String(humidity) + String(",") + String(altitude) + String(",");
+//    bleUart.write(data.c_str());
+//    bleUart.flush();
+//
+//    data = String(accel_x) + String(",") + String(accel_y) + String(",") + String(accel_z) + String(",");
+//    bleUart.write(data.c_str());
+//    bleUart.flush();
+// 
+//    data = String(gyro_x) + String(",") + String(gyro_y) + String(",") + String(gyro_z) + String(",");
+//    bleUart.write(data.c_str());
+//    bleUart.flush();
+//
+//    data = String(r) + String(",") + String(g) + String(",") + String(b) + String(",") + String(a) + String(",");
+//    bleUart.write(data.c_str());
+//    bleUart.flush();
+//
+//    data = String(mic) + String(",") + String(fanSpeed) + String("\n");
+//    bleUart.write(data.c_str());
+//    bleUart.flush();
 }
